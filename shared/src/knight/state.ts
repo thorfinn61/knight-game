@@ -27,6 +27,7 @@ export type KnightAction =
   | 'dash'
   | 'slide'
   | 'parry'
+  | 'feint'
   | 'blaze'
   | 'hurt'
   | 'dead';
@@ -80,6 +81,8 @@ export interface KnightState {
   armor: number;
   /** Jauge des Cendres, de 0 à ASH_MAX : pleine, elle permet l'Embrasement. */
   ash: number;
+  /** Ticks de charge accumulés pendant l'armé d'un coup chargé. */
+  charge: number;
 }
 
 export function createKnight(id: string, spawn: Point, facing: Facing = 1): KnightState {
@@ -112,6 +115,7 @@ export function createKnight(id: string, spawn: Point, facing: Facing = 1): Knig
     power: KNIGHT_POWER,
     armor: KNIGHT_ARMOR,
     ash: 0,
+    charge: 0,
   };
 }
 

@@ -41,6 +41,10 @@ const PARRY_POSE_FRAME = 3;
 const PARRY_GLINT_TICKS = 3;
 const PARRY_GLINT_COLOR = 0xe8f0ff;
 const PARRY_TINT = 0xb4c8f0;
+/** Coup chargé : lueur d'armé puis flash quand la pleine charge est atteinte. */
+const CHARGE_WARM_TINT = 0xffd290;
+const CHARGE_GLINT_COLOR = 0xfff4d0;
+const FEINT_TINT = 0xa0a8b4;
 /**
  * Embrasement, sans animation dédiée dans le pack : armé accroupi (la transition), onde sur
  * le grand arc de l'attaque 2, puis le chevalier reste accroupi, essoufflé, s'il a raté.
@@ -101,6 +105,8 @@ export function pickKnightFrame(k: KnightState): KnightFrame {
       return { sheet: 'CrouchAttack', frame: frameAt(ATTACKS.crouchAttack.frameTicks, t) };
     case 'parry':
       return { sheet: 'Attack', frame: PARRY_POSE_FRAME };
+    case 'feint':
+      return { sheet: 'Attack', frame: 0 };
     case 'blaze':
       return blazeFrame(t);
     case 'roll':
@@ -177,6 +183,10 @@ export class KnightView {
       else this.sprite.setTint(PARRY_TINT);
     } else if (k.action === 'blaze') {
       this.paintBlaze(k.actionTick);
+    } else if (k.action === 'attack1' && k.charge > 0) {
+      this.paintCharge(k.charge);
+    } else if (k.action === 'feint') {
+      this.sprite.setTint(FEINT_TINT);
     } else if (this.look.tint !== null) {
       this.sprite.setTint(this.look.tint);
     } else {
@@ -207,6 +217,16 @@ export class KnightView {
       this.sprite.setTintFill(BLAZE_WHITE_HOT);
     } else {
       this.sprite.setTint(BLAZE_ASHEN);
+    }
+  }
+
+  private paintCharge(charge: number): void {
+    const full = ATTACKS.attack1.chargeable?.fullChargeTicks ?? 12;
+    if (charge >= full) {
+      if (Math.floor(charge / 2) % 2 === 0) this.sprite.setTintFill(CHARGE_GLINT_COLOR);
+      else this.sprite.setTint(CHARGE_WARM_TINT);
+    } else {
+      this.sprite.setTint(CHARGE_WARM_TINT);
     }
   }
 

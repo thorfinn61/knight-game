@@ -2,6 +2,15 @@ import type { Rect } from '../geometry.ts';
 
 export type AttackId = 'attack1' | 'attack2' | 'crouchAttack' | 'airAttack' | 'blaze';
 
+export interface AttackChargeDef {
+  /** Nombre maximum de ticks pendant lesquels l'armé peut être prolongé. */
+  maxChargeTicks: number;
+  /** Ticks de charge nécessaires pour que le coup soit considéré comme pleinement chargé. */
+  fullChargeTicks: number;
+  /** Dégâts additionnels infligés par un coup pleinement chargé. */
+  bonusDamage: number;
+}
+
 export interface AttackDef {
   id: AttackId;
   /** Durée en ticks de chaque frame d'animation. */
@@ -38,12 +47,17 @@ export interface AttackDef {
   stun?: number;
   /** Coup ultime : il ne recharge pas la jauge des Cendres. */
   ultimate?: boolean;
+  /** Ce coup peut-il être feinté pendant son armé ? */
+  feintable?: boolean;
+  /** Réglages de charge si le coup peut être retardé et renforcé en maintenant la touche. */
+  chargeable?: AttackChargeDef;
 }
 
 export const ATTACKS: Readonly<Record<AttackId, AttackDef>> = {
   // Coup de taille haut : l'arc passe au-dessus de la tête et retombe devant. L'armé est
   // long (150 ms) pour qu'on puisse le voir venir. Raté, il laisse une longue récupération
   // (270 ms) : de quoi se faire punir. Touché, il s'annule en attaque 2.
+  // Peut être feinté pendant l'armé, ou chargé pour décaler le coup et frapper plus lourd.
   attack1: {
     id: 'attack1',
     frameTicks: [9, 3, 3, 16],
@@ -57,6 +71,12 @@ export const ATTACKS: Readonly<Record<AttackId, AttackDef>> = {
     lunge: { fromTick: 2, toTick: 10, speed: 40 },
     combo: { next: 'attack2', fromTick: 3 },
     cancelTick: 15,
+    feintable: true,
+    chargeable: {
+      maxChargeTicks: 15,
+      fullChargeTicks: 12,
+      bonusDamage: 4,
+    },
   },
   // Balayage bas qui clôt le combo : il ne s'obtient qu'en touchant avec l'attaque 1, et
   // ne relance rien. Le combo s'arrête à deux coups.

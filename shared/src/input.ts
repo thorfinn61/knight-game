@@ -13,6 +13,8 @@ export interface InputFrame {
   jumpHeld: boolean;
   /** Appui sur saut depuis le tick précédent. */
   jumpPressed: boolean;
+  /** Touche d'attaque maintenue : permet de charger son coup. */
+  attackHeld: boolean;
   /** Appui sur attaque depuis le tick précédent. */
   attackPressed: boolean;
   /** Appui sur esquive depuis le tick précédent. */
@@ -34,6 +36,7 @@ export const NEUTRAL_INPUT: Readonly<InputFrame> = Object.freeze({
   crouch: false,
   jumpHeld: false,
   jumpPressed: false,
+  attackHeld: false,
   attackPressed: false,
   dodgePressed: false,
   parryPressed: false,

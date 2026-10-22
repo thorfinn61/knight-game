@@ -37,11 +37,13 @@ Le prototype précédent était une coop en expéditions, avec mobs, boss, hub e
 | Fin de manche       | 3 s ; le vaincu tombe puis se relève                                                     |
 | Fin du duel         | 5 s d'annonce, puis un nouveau duel commence seul                                        |
 | Vie                 | 100                                                                                      |
-| Dégâts              | attaque 1 : 10, attaque 2 : 16, accroupie : 8, aérienne : 10 ; × 1,5 sur un contre       |
-| Recul après un coup | léger 16 ticks, lourd (attaque 2) 11 ticks et projection ; + 8 ticks sur un contre       |
-| Parade              | garde de 30 ticks, active les 10 premiers ; réussie : attaquant déséquilibré 40 ticks    |
+| Dégâts              | attaque 1 : 10 (chargée : 14), attaque 2 : 16, accroupie : 8, aérienne : 10 ; × 1,5 sur un contre |
+| Recul après un coup | léger 16 ticks, lourd (attaque 2 ou chargée) 11 ticks et projection ; + 8 ticks sur un contre     |
+| Parade              | garde de 30 ticks, active les 10 premiers ; réussie : attaquant déséquilibré 40 ticks  |
+| Feinte              | pendant l'armé de l'attaque 1 (L ou clic droit) ; arrêt 6 ticks, vulnérable au contre |
+| Coup chargé         | maintenir attaque au tick 8 (jusqu'à 15 ticks) ; ≥ 12 ticks : 14 dégâts, coup lourd   |
 | Jauge des Cendres   | 100 ; coup porté +10 (+5 sur un contre), parade +25, choc +5, la moitié des dégâts reçus |
-| Embrasement         | jauge pleine ; 12 dégâts, imparable, invulnérable du tick 0 au tick 19                   |
+| Embrasement         | jauge pleine ; 12 dégâts, imparable, invulnérable du tick 0 au tick 19                 |
 
 - **Pas de matraquage gagnant** (règles du 2026-10-20) :
   - les coups sont lents à sortir : l'attaque 1 frappe après 150 ms, on la voit venir ;
@@ -61,6 +63,15 @@ Le prototype précédent était une coop en expéditions, avec mobs, boss, hub e
   - invulnérable pendant l'armé et l'onde ; le serveur le protège même d'un coup que l'attaquant voyait porter juste avant ;
   - l'onde ne se pare pas et ne provoque pas de choc ; 12 dégâts (× 1,5 sur un contre), l'adversaire est projeté loin et reste 30 ticks dans le recul. Touché, l'Embrasement s'arrête au tick 24 et le chevalier reprend la main ;
   - contre-jeu : reculer hors de portée, sauter par-dessus, ou rouler au bon moment. Raté, l'essoufflement de 500 ms se punit d'un contre.
+- **Feinte d'attaque** (règles du 2026-10-22) :
+  - pendant l'armé de l'attaque 1 (avant les frames actives du tick 9), appuyer sur la touche de parade (L ou clic droit) annule le geste ;
+  - le chevalier entre dans un court arrêt de 6 ticks (100 ms) où il ne peut pas frapper immédiatement, et encaisse un contre s'il est touché ;
+  - l'adversaire qui a tenté de parer au réflexe reste coincé dans sa garde (30 ticks, dont 20 ticks de récupération vulnérable) : le feinteur peut alors riposter avec un contre garanti (× 1,5).
+- **Coup chargé** (règles du 2026-10-22) :
+  - maintenir la touche d'attaque (J ou clic gauche) retient l'armé au tick 8 jusqu'à 15 ticks supplémentaires (250 ms max) avant de frapper ;
+  - relâcher avant pleine charge décale le timing d'impact pour tromper la fenêtre de parade adverse (10 dégâts de base) ;
+  - à pleine charge (≥ 12 ticks de charge), le coup s'accompagne d'un flash blanc-doré, inflige 14 dégâts (21 dégâts sur un contre), un hitstop de 7 ticks et repousse lourdement la cible ;
+  - un coup en cours de charge peut également être feinté à tout moment avec la touche de parade.
 - Le combo est garanti si le premier coup touche, puis le défenseur peut rouler avant la reprise. Trois tests d'équilibrage le vérifient : celui qui matraque perd contre un joueur qui garde ses distances et punit, et contre un joueur qui pare et riposte ; celui qui pare sans arrêt perd contre un joueur qui frappe pendant sa récupération.
 - La roulade est invulnérable du tick 2 au tick 19, puis punissable jusqu'au tick 34 : rouler sans arrêt ne protège pas. Les chevaliers se traversent (pas de collision entre joueurs).
 - Un joueur seul attend son adversaire ; un départ en cours de duel remet le salon en attente.
@@ -179,8 +190,9 @@ scripts/              dev.mjs (serveur + client), smoke.mjs (test de fumée)
 | Se déplacer                                                                  | Q / D (ou flèches)         |             |
 | Sauter, maintenir pour monter plus haut                                      | Z, Espace ou flèche haut   |             |
 | S'accroupir, marche accroupie avec Q / D                                     | S maintenu (ou flèche bas) |             |
-| Attaquer, rappuyer pour le combo ; accroupi : coup bas ; en l'air : aérienne | J                          | clic gauche |
-| Parer (au sol) : renvoie un coup reçu au bon moment                          | L                          | clic droit  |
+| Attaquer, maintenir pour charger le coup ; accroupi : coup bas ; en l'air : aérienne | J                          | clic gauche |
+| Feinter : pendant l'armé d'une attaque, annule le geste et trompe la parade          | L                          | clic droit  |
+| Parer (au sol) : renvoie un coup reçu au bon moment                                  | L                          | clic droit  |
 | Embrasement, jauge des Cendres pleine (au sol, même en encaissant un coup)   | E ou I                     |             |
 | Esquive : roulade au sol (invulnérable), dash en l'air (un par saut)         | Maj gauche ou K            |             |
 | Glissade                                                                     | S + esquive                |             |
@@ -236,16 +248,16 @@ Les planches murales (`_WallSlide`, `_WallHang`, `_WallClimb…`) ne sont pas ch
 ## État actuel
 
 - Duel 1 contre 1 jouable en ligne, depuis un autre PC du réseau local : combat rapide, duel privé par code, manches, chronomètre, K.O., victoire, revanche automatique. L'entraînement se joue face au mannequin.
-- Parade et choc des lames jouables en ligne, avec leurs effets (« Parade ! », « Choc ! », anneau et éclats).
+- Parade, feinte d'attaque et coup chargé jouables en ligne et à l'entraînement, avec retours visuels (reflet de garde, lueur et flash de charge).
 - Jauge des Cendres et Embrasement jouables en ligne et à l'entraînement : jauge sous chaque barre de vie, braises sur le chevalier quand elle est pleine, anneau de flammes, lumière qui flambe.
-- Les 79 tests de `shared/`, dont trois d'équilibrage, et les 5 tests d'intégration du serveur (dont une parade entre deux vrais clients) passent, ainsi que le typecheck et le build.
-- Le test de fumée joue un entraînement puis un duel complet à 80 ms de latence : parade à L et au clic droit, parade réussie vue des deux navigateurs, Embrasement à l'entraînement (jauge remplie par la touche C) et en duel (jauge remplie au combat), deux manches, sans erreur ni divergence.
+- Les 88 tests de `shared/`, dont trois d'équilibrage et la suite de feinte/charge, et les 5 tests d'intégration du serveur passent, ainsi que le typecheck et le build.
+- Le test de fumée joue un entraînement puis un duel complet à 80 ms de latence : parade à L et au clic droit, parade réussie vue des deux navigateurs, Embrasement à l'entraînement et en duel, deux manches, sans erreur ni divergence.
 - Vérifié via l'adresse réseau local (`http://10.13.4.10:2567`) : deux navigateurs se retrouvent par le combat rapide et se battent.
 - En développement, `window.__cendres` expose `{ session, scene, ready }` pour les tests et la console du navigateur.
 
 ## Pistes
 
-Rien n'est décidé. Pour le gameplay : un adversaire d'entraînement qui attaque (le mannequin ne frappe pas, la parade ne s'y entraîne pas), un coup chargé, une jauge d'endurance (écartée jusqu'ici), d'autres arènes. Ailleurs : les sons, les particules et la brume, un classement, la mise en ligne publique.
+Rien n'est décidé. Pour le gameplay : un adversaire d'entraînement qui attaque (le mannequin ne frappe pas, la parade ne s'y entraîne pas), une jauge d'endurance (écartée jusqu'ici), d'autres arènes. Ailleurs : les sons, les particules et la brume, un classement, la mise en ligne publique.
 
 ## Journal des décisions
 
@@ -258,6 +270,7 @@ Rien n'est décidé. Pour le gameplay : un adversaire d'entraînement qui attaqu
 - 2026-10-20 : contre le matraquage, coups plus lents, engagement sur un coup raté, combo limité à deux coups, contres majorés, coup lourd qui repousse hors de portée, roulade punissable en fin ; un coup annoncé refusé est annulé chez l'attaquant ; demi-tour fluide.
 - 2026-10-21 : parade (L, clic droit) avec délai de grâce réseau de 5 ticks, choc des lames ; l'arbitre des coups vit dans `shared/` ; le message `hit` devient `EVENT_MESSAGE` ; l'étincelle d'impact devient un losange (l'étoile à quatre branches dessinait une croix).
 - 2026-10-21 : jauge des Cendres et Embrasement (E, I), le coup ultime : imparable, invulnérable à l'armé, utilisable en encaissant un coup ; la jauge se garde entre les manches. Le gain sur le mannequin se fait dans `detectHits` (la prédiction reste identique au monde complet), celui sur l'adversaire dans l'arbitre.
+- 2026-10-22 : feinte d'attaque (parade pendant l'armé, temps d'arrêt de 6 ticks vulnérable au contre pour baiter une parade) et coup chargé (maintien de l'attaque au tick 8 jusqu'à 15 ticks de charge supplémentaires, décalage du timing, 14 dégâts et coup lourd dès 12 ticks, feintable).
 
 ## Points d'attention
 

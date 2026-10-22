@@ -27,6 +27,11 @@ export const HURT_HEAVY_TICKS = 11;
 export const PARRY_ACTIVE_TICKS = 10;
 export const PARRY_TICKS = 30;
 
+/**
+ * Feinte : temps d'arrêt bref (100 ms) après avoir annulé son armé, avant de pouvoir agir.
+ */
+export const FEINT_TICKS = 6;
+
 /** Glissade : entrée, boucle, puis sortie. */
 export const SLIDE_START_TICKS = 5;
 export const SLIDE_END_TICKS = 5;

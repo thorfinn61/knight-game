@@ -18,6 +18,7 @@ const GAME_PORT = 2598;
 const LATENCY_MS = 80;
 const chromePath = [
   process.env.CHROME_PATH,
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/usr/bin/google-chrome',
   '/usr/bin/google-chrome-stable',
   '/usr/bin/chromium',

@@ -43,6 +43,7 @@ export class KeyboardMouseInput {
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('blur', this.onBlur);
     canvas.addEventListener('pointerdown', this.onPointerDown);
+    window.addEventListener('pointerup', this.onPointerUp);
     canvas.addEventListener('contextmenu', this.onContextMenu);
   }
 
@@ -60,6 +61,7 @@ export class KeyboardMouseInput {
       crouch: this.held.has('crouch'),
       jumpHeld: this.held.has('jump'),
       jumpPressed: this.pressed.has('jump'),
+      attackHeld: this.held.has('attack'),
       attackPressed: this.pressed.has('attack'),
       dodgePressed: this.pressed.has('dodge'),
       parryPressed: this.pressed.has('parry'),
@@ -76,6 +78,7 @@ export class KeyboardMouseInput {
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('blur', this.onBlur);
     this.canvas.removeEventListener('pointerdown', this.onPointerDown);
+    window.removeEventListener('pointerup', this.onPointerUp);
     this.canvas.removeEventListener('contextmenu', this.onContextMenu);
   }
 
@@ -102,7 +105,12 @@ export class KeyboardMouseInput {
 
   private readonly onPointerDown = (event: PointerEvent): void => {
     const action = MOUSE_ACTIONS[event.button];
-    if (action) this.pressed.add(action);
+    if (action) this.press(action);
+  };
+
+  private readonly onPointerUp = (event: PointerEvent): void => {
+    const action = MOUSE_ACTIONS[event.button];
+    if (action) this.held.delete(action);
   };
 
   private readonly onContextMenu = (event: MouseEvent): void => {

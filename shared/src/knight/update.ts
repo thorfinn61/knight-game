@@ -9,6 +9,7 @@ import {
   CROUCH_DOWN_TICKS,
   DASH_TICKS,
   DEATH_TOTAL_TICKS,
+  FEINT_TICKS,
   HURT_HEAVY_TICKS,
   HURT_TICKS,
   LAND_TICKS,
@@ -46,9 +47,9 @@ export function isParrying(k: KnightState): boolean {
   return k.action === 'parry' && k.actionTick < PARRY_ACTIVE_TICKS;
 }
 
-/** Vrai si le chevalier est en plein engagement : armé, coup, récupération, parade ratée. */
+/** Vrai si le chevalier est en plein engagement : armé, coup, récupération, feinte, parade ratée. */
 export function isCounterable(k: KnightState): boolean {
-  if (isAttackId(k.action)) return true;
+  if (isAttackId(k.action) || k.action === 'feint') return true;
   return k.action === 'parry' && k.actionTick >= PARRY_ACTIVE_TICKS;
 }
 
@@ -121,6 +122,7 @@ function clearBuffers(k: KnightState): void {
   k.blazeBuffer = 0;
   k.comboQueued = false;
   k.hitMask = 0;
+  k.charge = 0;
 }
 
 /** Entre dans une action, en repartant de son premier tick. */
@@ -159,6 +161,7 @@ function startAttack(k: KnightState, id: AttackId, input: InputFrame): void {
   k.attackBuffer = 0;
   k.comboQueued = false;
   k.hitMask = 0;
+  k.charge = 0;
   const lunge = ATTACKS[id].lunge;
   if (lunge && lunge.fromTick === 0) k.vx = k.facing * lunge.speed;
   enter(k, id);
@@ -269,6 +272,8 @@ function runAction(k: KnightState, input: InputFrame, solids: readonly Rect[]): 
       return sliding(k, input, solids);
     case 'parry':
       return parrying(k, input);
+    case 'feint':
+      return feinting(k, input, solids);
     case 'hurt':
       return hurting(k);
     case 'dead':
@@ -395,6 +400,28 @@ function standingUp(k: KnightState, input: InputFrame, solids: readonly Rect[]):
 function attacking(k: KnightState, id: AttackId, input: InputFrame, solids: readonly Rect[]): void {
   const def = ATTACKS[id];
   const t = k.actionTick;
+  const startupTicks = def.frameTicks[0] ?? 0;
+  // Feinte : pendant l'armé (avant les frames actives), un appui sur parade
+  // annule l'attaque et bascule en feinte (court temps d'arrêt).
+  if (def.feintable && t < startupTicks && k.hitMask === 0) {
+    if (input.parryPressed) {
+      k.charge = 0;
+      clearBuffers(k);
+      enter(k, 'feint');
+      return;
+    }
+  }
+  // Coup chargé : au dernier tick d'armé, tant que la touche reste maintenue,
+  // le chevalier retient son coup jusqu'à maxChargeTicks.
+  const armTick = startupTicks - 1;
+  if (def.chargeable && t === armTick && k.hitMask === 0) {
+    if (input.attackHeld && k.charge < def.chargeable.maxChargeTicks) {
+      k.charge++;
+      k.actionTick = armTick - 1;
+      k.vx = approach(k.vx, 0, T.ATTACK_DECEL * DT);
+      return;
+    }
+  }
   // Seul un coup qui a touché s'annule : rater engage jusqu'à la fin de l'animation.
   const connected = k.hitMask !== 0;
   if (connected && def.endOnHitTick !== undefined && t >= def.endOnHitTick) {
@@ -432,6 +459,7 @@ function attacking(k: KnightState, id: AttackId, input: InputFrame, solids: read
 function endAttack(k: KnightState, id: AttackId, input: InputFrame, solids: readonly Rect[]): void {
   k.comboQueued = false;
   k.hitMask = 0;
+  k.charge = 0;
   if (!k.grounded) {
     enter(k, 'fall');
   } else if (id === 'crouchAttack' || !canStand(k, solids)) {
@@ -482,6 +510,15 @@ function sliding(k: KnightState, input: InputFrame, solids: readonly Rect[]): vo
 function parrying(k: KnightState, input: InputFrame): void {
   k.vx = approach(k.vx, 0, T.GROUND_DECEL * DT);
   if (k.actionTick >= PARRY_TICKS) switchTo(k, input.moveX !== 0 ? 'run' : 'idle');
+}
+
+/** Feinte : temps d'arrêt bref après avoir avorté un armé. */
+function feinting(k: KnightState, input: InputFrame, solids: readonly Rect[]): void {
+  k.vx = approach(k.vx, 0, T.GROUND_DECEL * DT);
+  if (k.actionTick >= FEINT_TICKS) {
+    if (tryGroundActions(k, input, solids)) return;
+    switchTo(k, input.moveX !== 0 ? 'run' : 'idle');
+  }
 }
 
 /** Recul après un coup. Un Embrasement, jauge pleine, permet d'en sortir aussitôt. */
@@ -552,6 +589,7 @@ function onLeftGround(k: KnightState): void {
     case 'roll':
     case 'slide':
     case 'parry':
+    case 'feint':
       enter(k, 'fall');
       return;
     default:

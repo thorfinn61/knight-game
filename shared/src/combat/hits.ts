@@ -75,6 +75,10 @@ export function detectHits(
   const hitbox = activeHitbox(k);
   if (!hitbox || !isAttackId(k.action)) return [];
   const def = ATTACKS[k.action];
+  const isCharged = Boolean(def.chargeable && k.charge >= def.chargeable.fullChargeTicks);
+  const baseDamage = def.damage + (isCharged ? def.chargeable!.bonusDamage : 0);
+  const heavy = def.heavy || isCharged;
+  const hitstop = isCharged ? 7 : def.hitstop;
   const hits: KnightHit[] = [];
   targets.forEach((target, targetIndex) => {
     const bit = 2 ** targetIndex;
@@ -87,8 +91,8 @@ export function detectHits(
     hits.push({
       targetIndex,
       attack: def.id,
-      damage: computeDamage(def.damage, k.power, target.armor),
-      heavy: def.heavy,
+      damage: computeDamage(baseDamage, k.power, target.armor),
+      heavy,
       x: contact.x + contact.w / 2,
       y: contact.y + contact.h / 2,
       direction: def.radial ? ((target.x >= k.x ? 1 : -1) as Facing) : k.facing,
@@ -99,14 +103,14 @@ export function detectHits(
     hits.push({
       targetIndex: OPPONENT_TARGET,
       attack: def.id,
-      damage: computeDamage(def.damage, k.power, 0),
-      heavy: def.heavy,
+      damage: computeDamage(baseDamage, k.power, 0),
+      heavy,
       x: hitbox.x + hitbox.w / 2,
       y: hitbox.y + hitbox.h / 2,
       direction: k.facing,
     });
   }
-  if (hits.length > 0) k.hitstop = def.hitstop;
+  if (hits.length > 0) k.hitstop = hitstop;
   return hits;
 }
 

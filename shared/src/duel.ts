@@ -156,19 +156,19 @@ export function applyStrike(
   }
   const def = ATTACKS[hit.attack];
   const counter = isCounterable(defender);
-  const base = counter ? def.damage * COUNTER_DAMAGE_MULTIPLIER : def.damage;
+  const base = counter ? hit.damage * COUNTER_DAMAGE_MULTIPLIER : hit.damage;
   const damage = computeDamage(base, attacker.power, defender.armor);
   const contact = contactPoint(attacker, seen);
   const push = (def.radial ? (defender.x >= attacker.x ? 1 : -1) : attacker.facing) as Facing;
   defender.hp = Math.max(0, defender.hp - damage);
   if (defender.hp === 0) killKnight(defender, push);
   else {
-    hurtKnight(defender, push, def.heavy);
+    hurtKnight(defender, push, hit.heavy);
     if (def.knockback !== undefined) defender.vx = push * def.knockback;
     if (def.stun !== undefined) defender.stun = def.stun;
     if (counter) defender.stun += COUNTER_EXTRA_STUN;
   }
-  defender.hitstop = def.hitstop;
+  defender.hitstop = hit.heavy && !def.heavy ? 7 : def.hitstop;
   if (!def.ultimate) gainAsh(attacker, ASH_ON_HIT + (counter ? ASH_ON_COUNTER : 0));
   gainAsh(defender, damage * ASH_PER_DAMAGE_TAKEN);
   return {
@@ -177,7 +177,7 @@ export function applyStrike(
     targetId: defender.id,
     attack: def.id,
     damage,
-    heavy: def.heavy,
+    heavy: hit.heavy,
     counter,
     x: contact.x,
     y: contact.y,
