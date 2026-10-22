@@ -42,9 +42,9 @@ export class KeyboardMouseInput {
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('blur', this.onBlur);
-    canvas.addEventListener('pointerdown', this.onPointerDown);
-    window.addEventListener('pointerup', this.onPointerUp);
-    canvas.addEventListener('contextmenu', this.onContextMenu);
+    window.addEventListener('mousedown', this.onMouseDown);
+    window.addEventListener('mouseup', this.onMouseUp);
+    window.addEventListener('contextmenu', this.onContextMenu);
   }
 
   /** Lit l'état courant et consomme les appuis en attente. */
@@ -77,9 +77,9 @@ export class KeyboardMouseInput {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('blur', this.onBlur);
-    this.canvas.removeEventListener('pointerdown', this.onPointerDown);
-    window.removeEventListener('pointerup', this.onPointerUp);
-    this.canvas.removeEventListener('contextmenu', this.onContextMenu);
+    window.removeEventListener('mousedown', this.onMouseDown);
+    window.removeEventListener('mouseup', this.onMouseUp);
+    window.removeEventListener('contextmenu', this.onContextMenu);
   }
 
   private press(action: Action): void {
@@ -103,13 +103,25 @@ export class KeyboardMouseInput {
     this.held.delete(action);
   };
 
-  private readonly onPointerDown = (event: PointerEvent): void => {
-    const action = MOUSE_ACTIONS[event.button];
-    if (action) this.press(action);
+  private mouseAction(event: MouseEvent): Action | undefined {
+    // Clic droit ou Ctrl+clic (sur Mac) = parade / feinte
+    if (event.button === 2 || (event.button === 0 && event.ctrlKey)) {
+      return 'parry';
+    }
+    return MOUSE_ACTIONS[event.button];
+  }
+
+  private readonly onMouseDown = (event: MouseEvent): void => {
+    if (isTyping(event) || isMenu(event)) return;
+    const action = this.mouseAction(event);
+    if (action) {
+      this.press(action);
+      event.preventDefault();
+    }
   };
 
-  private readonly onPointerUp = (event: PointerEvent): void => {
-    const action = MOUSE_ACTIONS[event.button];
+  private readonly onMouseUp = (event: MouseEvent): void => {
+    const action = this.mouseAction(event);
     if (action) this.held.delete(action);
   };
 
@@ -125,7 +137,13 @@ export class KeyboardMouseInput {
 }
 
 /** Vrai si la touche part d'un champ de saisie : elle ne doit pas jouer. */
-function isTyping(event: KeyboardEvent): boolean {
+function isTyping(event: Event): boolean {
   const target = event.target;
   return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+}
+
+/** Vrai si le clic a lieu dans le panneau de menu HTML. */
+function isMenu(event: MouseEvent): boolean {
+  const target = event.target;
+  return target instanceof HTMLElement && target.closest('#menu') !== null;
 }

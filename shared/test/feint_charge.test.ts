@@ -38,14 +38,34 @@ describe('feinte d’attaque', () => {
     expect(k.action).toBe('idle');
   });
 
-  it('ne peut pas être feintée une fois que les frames actives ont commencé', () => {
+  it('peut être feintée avant d’avoir touché (durant l’armé ou le début de l’arc)', () => {
     const k = createKnight('a', { x: 200, y: FLOOR });
     stepKnight(k, input({ attackPressed: true }), level);
-    while (!activeHitbox(k)) stepKnight(k, input(), level);
-
-    // En frame active, appuyer sur parade ne feinte pas
-    stepKnight(k, input({ parryPressed: true }), level);
+    // On avance dans les premières frames actives (avant cancelTick)
+    while (k.actionTick < 11) stepKnight(k, input(), level);
     expect(k.action).toBe('attack1');
+
+    // Tant que le coup n'a pas touché, parade feinte l'attaque
+    stepKnight(k, input({ parryPressed: true }), level);
+    expect(k.action).toBe('feint');
+  });
+
+  it('ne peut pas être feintée une fois que le coup a touché ou est en récupération', () => {
+    // Cas 1 : En récupération après cancelTick
+    const k1 = createKnight('a', { x: 200, y: FLOOR });
+    stepKnight(k1, input({ attackPressed: true }), level);
+    while (k1.actionTick < ATTACKS.attack1.cancelTick) stepKnight(k1, input(), level);
+    stepKnight(k1, input({ parryPressed: true }), level);
+    expect(k1.action).toBe('attack1');
+
+    // Cas 2 : Un coup qui a déjà touché ne peut pas être feinté
+    const { a, step } = arena();
+    step({ attackPressed: true });
+    while (!activeHitbox(a)) step({ strike: true });
+    step({ strike: true }); // Le coup porte
+    expect(a.hitMask).not.toBe(0);
+    step({ parryPressed: true });
+    expect(a.action).toBe('attack1');
   });
 
   it('le chevalier est considéré en contre pendant sa feinte', () => {

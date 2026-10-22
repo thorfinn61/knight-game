@@ -47,8 +47,10 @@ export interface AttackDef {
   stun?: number;
   /** Coup ultime : il ne recharge pas la jauge des Cendres. */
   ultimate?: boolean;
-  /** Ce coup peut-il être feinté pendant son armé ? */
+  /** Ce coup peut-il être feinté (pendant son armé, sa charge ou avant la récupération) ? */
   feintable?: boolean;
+  /** Tick maximal auquel la feinte peut encore annuler le coup s'il n'a pas touché (défaut : cancelTick). */
+  feintMaxTick?: number;
   /** Réglages de charge si le coup peut être retardé et renforcé en maintenant la touche. */
   chargeable?: AttackChargeDef;
 }
@@ -105,6 +107,7 @@ export const ATTACKS: Readonly<Record<AttackId, AttackDef>> = {
     hitstop: 4,
     heavy: false,
     cancelTick: 12,
+    feintable: true,
   },
   // Attaque en l'air : reprend l'animation de l'attaque 1, le pack n'en ayant pas d'autre.
   airAttack: {

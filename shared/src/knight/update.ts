@@ -401,10 +401,12 @@ function attacking(k: KnightState, id: AttackId, input: InputFrame, solids: read
   const def = ATTACKS[id];
   const t = k.actionTick;
   const startupTicks = def.frameTicks[0] ?? 0;
-  // Feinte : pendant l'armé (avant les frames actives), un appui sur parade
+  // Feinte : tant que le coup n'a pas touché et avant la fin de l'engagement
+  // (durant l'armé, la charge, ou avant la récupération), un appui sur parade
   // annule l'attaque et bascule en feinte (court temps d'arrêt).
-  if (def.feintable && t < startupTicks && k.hitMask === 0) {
-    if (input.parryPressed) {
+  const feintWindow = def.feintMaxTick ?? def.cancelTick;
+  if (def.feintable && (t < feintWindow || k.charge > 0) && k.hitMask === 0) {
+    if (input.parryPressed || k.parryBuffer > 0) {
       k.charge = 0;
       clearBuffers(k);
       enter(k, 'feint');

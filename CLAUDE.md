@@ -40,7 +40,7 @@ Le prototype précédent était une coop en expéditions, avec mobs, boss, hub e
 | Dégâts              | attaque 1 : 10 (chargée : 14), attaque 2 : 16, accroupie : 8, aérienne : 10 ; × 1,5 sur un contre |
 | Recul après un coup | léger 16 ticks, lourd (attaque 2 ou chargée) 11 ticks et projection ; + 8 ticks sur un contre     |
 | Parade              | garde de 30 ticks, active les 10 premiers ; réussie : attaquant déséquilibré 40 ticks  |
-| Feinte              | pendant l'armé de l'attaque 1 (L ou clic droit) ; arrêt 6 ticks, vulnérable au contre |
+| Feinte              | avant l'impact / pendant l'armé ou la charge (L ou clic droit) ; arrêt 6 ticks, vulnérable au contre |
 | Coup chargé         | maintenir attaque au tick 8 (jusqu'à 15 ticks) ; ≥ 12 ticks : 14 dégâts, coup lourd   |
 | Jauge des Cendres   | 100 ; coup porté +10 (+5 sur un contre), parade +25, choc +5, la moitié des dégâts reçus |
 | Embrasement         | jauge pleine ; 12 dégâts, imparable, invulnérable du tick 0 au tick 19                 |
@@ -270,7 +270,7 @@ Rien n'est décidé. Pour le gameplay : un adversaire d'entraînement qui attaqu
 - 2026-10-20 : contre le matraquage, coups plus lents, engagement sur un coup raté, combo limité à deux coups, contres majorés, coup lourd qui repousse hors de portée, roulade punissable en fin ; un coup annoncé refusé est annulé chez l'attaquant ; demi-tour fluide.
 - 2026-10-21 : parade (L, clic droit) avec délai de grâce réseau de 5 ticks, choc des lames ; l'arbitre des coups vit dans `shared/` ; le message `hit` devient `EVENT_MESSAGE` ; l'étincelle d'impact devient un losange (l'étoile à quatre branches dessinait une croix).
 - 2026-10-21 : jauge des Cendres et Embrasement (E, I), le coup ultime : imparable, invulnérable à l'armé, utilisable en encaissant un coup ; la jauge se garde entre les manches. Le gain sur le mannequin se fait dans `detectHits` (la prédiction reste identique au monde complet), celui sur l'adversaire dans l'arbitre.
-- 2026-10-22 : feinte d'attaque (parade pendant l'armé, temps d'arrêt de 6 ticks vulnérable au contre pour baiter une parade) et coup chargé (maintien de l'attaque au tick 8 jusqu'à 15 ticks de charge supplémentaires, décalage du timing, 14 dégâts et coup lourd dès 12 ticks, feintable).
+- 2026-10-22 : feinte d'attaque (parade pendant l'armé, la charge ou avant l'impact, temps d'arrêt de 6 ticks vulnérable au contre pour baiter une parade) et coup chargé (maintien de l'attaque au tick 8 jusqu'à 15 ticks de charge supplémentaires, décalage du timing, 14 dégâts et coup lourd dès 12 ticks, feintable). Fenêtre de feinte étendue jusqu'à cancelTick tant que le coup n'a pas touché, écoute mousedown/mouseup multi-boutons (clic droit fiable même avec clic gauche maintenu, support Ctrl+clic Mac).
 
 ## Points d'attention
 
