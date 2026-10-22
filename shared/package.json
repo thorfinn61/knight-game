@@ -1,0 +1,22 @@
+{
+  "name": "@cendres/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Logique de jeu pure, sans Phaser : exécutée par le client et par le serveur",
+  "exports": {
+    ".": "./src/index.ts",
+    "./net": "./src/net/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.4"
+  },
+  "dependencies": {
+    "@colyseus/schema": "^5.0.39"
+  }
+}

@@ -1,0 +1,5 @@
+node_modules
+dist
+assets
+.smoke
+package-lock.json

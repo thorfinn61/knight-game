@@ -1,0 +1,21 @@
+{
+  "name": "@cendres/client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Client Phaser : rendu, entrées et effets",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cendres/shared": "*",
+    "@colyseus/sdk": "^0.18.5",
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.4"
+  }
+}
